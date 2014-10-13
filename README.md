@@ -1,4 +1,3 @@
-Node-Chat
-=========
+﻿# NodeJS_Chatify
 
-Simple "chatroulette-like" chat for node.js
+

@@ -1,0 +1,187 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chatify - connect with people around the world</title>
+
+    <!-- Bootstrap -->
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  	<div class="container">
+		<div class="row" id="welcomeScreen">
+	  		<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="padding-top:60px;">
+			    <div class="jumbotron">
+			  		<h1>Chatify</h1>
+			  		<p>Simply chat with other people around the world</p>
+			  		<form action="#" class="input-group" id="chatLoginForm">
+			  			<input type="text" class="form-control input-lg" id="chatNameInput" placeholder="Nickname" />
+			  			<span class="input-group-btn">
+			  				<button type="submit" class="btn btn-primary btn-lg" id="startChatButton">Start chatting</button>
+			  			</span>
+			  		</form>
+				</div>
+			</div>
+		</div>
+		<div class="page-header" id="chatHeader" style="display:none;">
+  			<h1>Chatify <small><span class="label label-default" id="stateLabel">connecting</span></small></h1>
+		</div>
+  	    <div class="row" id="chatBody" style="display:none;">
+  	        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="padding-top:60px;min-height: 100px; border: 1px solid #778899; overflow-y: scroll;">
+  	            <ul id="messages"></ul>
+  	            <div id="lastBody"></div>
+  	        </div>
+  	    </div>
+  	    <div class="row" id="chatFooter" style="display:none;">
+  	        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  	            <div class="input-group">
+  	                <span class="input-group-btn">
+  	                    <button type="submit" class="btn btn-default btn-lg" id="switchPartnerButton"><span class="glyphicon glyphicon-refresh"></span></button>
+  	                </span>
+  	                <input type="text" class="form-control input-lg" id="chatMessageInput" placeholder="Your message" />
+  	                <span class="input-group-btn">
+  	                    <button type="submit" class="btn btn-primary btn-lg" id="sendButton">Send</button>
+  	                </span>
+  	            </div>    
+  	        </div>
+  	    </div>
+  	    
+      </div>
+      <footer>
+          <span id="user_online_total">0</span> users online
+      </footer>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="jquery.scrollTo.min.js"></script>
+    <script type="text/javascript" src="socket.io.js"></script>
+    <script type="text/javascript">
+    	var chatNameInput, stateLabel, socket;
+
+    	$(document).ready(function () {
+    		
+			// Initialize the app
+    		init();
+
+    		$('#startChatButton').click(function (e) {
+    			
+    			var user_info = JSON.parse(localStorage.getItem('user_info') || '{}');
+    			console.log(user_info);
+    			socket.emit('login', { nickname: chatNameInput.val(), secret: user_info.secret });
+
+    			$('#welcomeScreen').hide();
+    			$('#chatHeader').show();
+    			$('#chatBody').show();
+    			$('#chatFooter').show();
+
+    		
+    		});
+
+    		$('#sendButton').click(function (e) {
+    		    sendChatMessage();
+    		});
+    	    
+    		$('#chatMessageInput').keypress(function (e) {
+    		    if (e.which == 13) {
+    		        sendChatMessage();
+    		    }
+    		});
+
+    		$('#switchPartnerButton').click(function (e) {
+    		    switchPartner();
+    		});
+
+    	});
+
+    	function sendChatMessage() {
+    	    var msg = $('#chatMessageInput').val();
+    	    socket.emit('chat_message', { message: $('#chatMessageInput').val() });
+    	    //$('#lastBody').ScrollTo();
+    	    //$('#chatMessageInput').val('');
+    	}
+
+    	function init() {
+    	    var newHeight = Math.max(Math.round($(window).height() - 400), 250);
+    	    $('#chatBody div').height(newHeight);
+    	    window.onresize = function() {
+    	        $('#chatBody div').height(Math.max(Math.round($(window).height() - 400), 250));
+    	    };
+
+
+
+
+
+
+
+    		$('#chatLoginForm').on('submit', function (e) {
+    			e.preventDefault();
+    		})
+    		chatNameInput = $('#chatNameInput');
+    		stateLabel = $('#stateLabel');
+
+    		var user_info = localStorage.getItem('user_info');
+    		user_info = user_info != null && user_info != undefined && user_info.length > 0 ? JSON.parse(user_info) : {};
+    	    chatNameInput.val(user_info.nickname);
+
+    	    socket = io.connect();
+
+    		socket.on('connect_error', function (e) {
+    				stateLabel.removeClass('label-success').addClass('label-danger').html('disconnected');
+    			});
+			socket.on('connect', function(e) {
+					stateLabel.removeClass('label-danger').addClass('label-success').html('connected');
+    			});
+    		socket.on('system_message', function (data){
+    		    switch (data.type) {
+    		        case 'error':
+    		            $('#chatBody div').html('<div class="alert alert-danger" role="alert"><strong>Error</strong> ' + data.message + '</div>');
+    		            $('#chatFooter div').html('');
+    		            break;
+    		        case 'user_online_total':
+    		            $('#user_online_total').html(data.message);
+    		            break;
+    		        case 'user_connected':
+    		            break;
+    		        case 'user_created':
+    		            break;
+    		        case 'user_found_partner':
+    		            $('#chatMessageInput').prop('disabled', false);
+    		            $('#sendButton').prop('disabled', false);
+    		            $('#messages').append('<li><strong>' + data.message + '</strong></li>'); //change to .html
+    		            break;
+    		        case 'user_looking_partner':
+    		            $('#chatMessageInput').prop('disabled', true);
+    		            $('#sendButton').prop('disabled', true);
+    		            break;
+    		        default:
+    		            $('#messages').append('<li>' + data.message + '</li>');
+    		            console.log(data);
+    		        break;
+    		    }
+    		});
+    		socket.on('chat_message', function (data) {
+    		    $('#messages').append('<li><strong>' + data.nickname + '</strong>: ' + data.message + '</li>');
+    		    $('#lastBody').ScrollTo();
+    		});
+    		socket.on('user_info', function (data) {
+ 				console.log(data);
+    			localStorage.setItem('user_info', JSON.stringify(data));
+    		});
+    	}
+    	
+        function switchPartner() {
+            socket.emit('switch_partner', {});
+        }
+    </script>
+  </body>
+</html>

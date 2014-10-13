@@ -1,0 +1,10 @@
+{
+  "name": "NodeJS_Chatify",
+  "version": "1.0.0",
+  "description": "NodeJS_Chatify",
+  "main": "app.js",
+  "author": {
+    "name": "Friedrich",
+    "email": ""
+  }
+}
