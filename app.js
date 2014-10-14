@@ -7,36 +7,34 @@
 , sha1 = require('sha1')
 , soloUsers = new Array()
 , onlineUser = 0;
-// Webserver
-// auf den Port x schalten
+
+// Assign the webserver to the specific port
 server.listen(conf.port);
 
-// wenn der Pfad / aufgerufen wird
+// Use this path normally.
 app.use(express.static(__dirname + '/public'));
 app.get('/', function (req, res) {
-    // so wird die Datei index.html ausgegeben
+    // Send the index.html file, if the server is called directly.
     res.sendFile(__dirname + '/public/index.html');
 });
-// Websocket
+
+// Called if the server / user opens a new connection
 io.sockets.on('connection', function (socket) {
+    // Count up the current onlineUser and output to console.
     console.log('user online: ' + ++onlineUser);
     
-    
-    //send all clients the current online user count
+    // Send all clients the current onlineUser count.
     io.sockets.emit('system_message', { type: 'user_online_total', message: onlineUser });
     
-    // der Client ist verbunden
-    
-
+    // Send a success message to the new connected client.
     socket.emit('system_message', { message: 'Du bist nun mit dem Server verbunden!' });
-    
     
     socket.on('login', function (userData) {
         console.log('Data: ' + JSON.stringify(userData));
         socket.client.nickname = userData.nickname;
         user.checkIfExists(userData, function (exists, userData) {
             if (exists) {
-                console.log('// User exists. Check secret.');
+                // User exists. Check secret.'
                 user.verifySecret(userData, function (success) {
                     if (success) {
                         socket.client.isLoggedIn = true;
@@ -48,7 +46,7 @@ io.sockets.on('connection', function (socket) {
                     }
                 });
             } else {
-                console.log('// User doesnt exist. Create new one.');
+                // User doesnt exist. Create new one.
                 user.addUser(userData, function (success, userData) {
                     socket.emit('system_message', { type: 'user_created', message: 'User created' });
                     socket.emit('user_info', userData);
@@ -70,10 +68,10 @@ io.sockets.on('connection', function (socket) {
         }
     });
 
-    socket.on('switch_partner', function(data) {
+    socket.on('switch_partner', function (data) {
+        
         // We disconnect each other and switch the partners
         // First we check if the partner is already in the solo users so that he cant find him/herself
-        
         if (soloUsers.indexOf(socket) == -1) {
             assign_partner(socket);
         }
@@ -92,10 +90,9 @@ io.sockets.on('connection', function (socket) {
         }
     });
 });
-// Portnummer in die Konsole schreiben
-console.log('Der Server läuft nun unter http://127.0.0.1:' + conf.port + '/');
 
-
+// Writing the current port to the console
+console.log('The server now runs on http://127.0.0.1:' + conf.port + '/');
 
 function assign_partner(socket) {
     //Loop through the solo users
@@ -133,25 +130,9 @@ function assign_partner(socket) {
     }
 }
 
-
-
 // ********************************
 // Prototyping for JS improvements
 // ********************************
 
-// Checks if an Object is an array.
-/*Object.prototype.isArray = function() {
-    if (Object.prototype.toString.call(this) == '[object Array]')
-         return true;
-    return false;
-};*/
-
 // Adds sha1 functionality to strings
 String.prototype.sha1 = function () { return sha1(this); };
-
-Math.randomBounds = function(lower, upper) {
-    var rnd = Math.random();
-    var abs = upper - lower;
-    return Math.round(rnd * 10000 % abs) + lower;
-};
-
