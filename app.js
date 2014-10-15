@@ -27,14 +27,15 @@ io.sockets.on('connection', function (socket) {
     io.sockets.emit('system_message', { type: 'user_online_total', message: onlineUser });
     
     // Send a success message to the new connected client.
-    socket.emit('system_message', { message: 'Du bist nun mit dem Server verbunden!' });
+    socket.emit('system_message', { type: 'user_connected', message: 'You are now connected to the server!' });
     
     socket.on('login', function (userData) {
         console.log('Data: ' + JSON.stringify(userData));
+        // Assign the nickname to the current socket.
         socket.client.nickname = userData.nickname;
         user.checkIfExists(userData, function (exists, userData) {
             if (exists) {
-                // User exists. Check secret.'
+                // User exists. Check secret.
                 user.verifySecret(userData, function (success) {
                     if (success) {
                         socket.client.isLoggedIn = true;
