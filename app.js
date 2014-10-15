@@ -28,7 +28,13 @@ io.sockets.on('connection', function (socket) {
     
     // Send a success message to the new connected client.
     socket.emit('system_message', { type: 'user_connected', message: 'You are now connected to the server!' });
-    
+
+    socket.on('user_name_check', function (data) {
+        user.checkIfExists(data, function(result) {
+            socket.emit('user_name_check', { result: !result });
+        });
+    });
+
     socket.on('login', function (userData) {
         console.log('Data: ' + JSON.stringify(userData));
         // Assign the nickname to the current socket.
@@ -70,7 +76,6 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('switch_partner', function (data) {
-        
         // We disconnect each other and switch the partners
         // First we check if the partner is already in the solo users so that he cant find him/herself
         if (soloUsers.indexOf(socket) == -1) {

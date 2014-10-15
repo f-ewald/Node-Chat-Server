@@ -111,29 +111,33 @@
     	}
 
     	function init() {
+    	    // Connect to the socket
+    	    socket = io.connect();
+    	    
+            // Set the height of the chat window to fill the page
     	    var newHeight = Math.max(Math.round($(window).height() - 400), 250);
     	    $('#chatBody div').height(newHeight);
     	    window.onresize = function() {
     	        $('#chatBody div').height(Math.max(Math.round($(window).height() - 400), 250));
     	    };
 
-
-
-
-
-
-
-    		$('#chatLoginForm').on('submit', function (e) {
-    			e.preventDefault();
-    		})
+    	    $('#chatLoginForm').on('submit', function(e) {
+    	        e.preventDefault();
+    	    });
     		chatNameInput = $('#chatNameInput');
     		stateLabel = $('#stateLabel');
+
+            // Send the chosen chat name to the server and see if it is avaliable.
+    		chatNameInput.keyup(function (e) {
+    		    socket.emit('user_name_check', { nickname: chatNameInput.val() });
+    	        //console.log(chatNameInput.val());
+    	    });
+
 
     		var user_info = localStorage.getItem('user_info');
     		user_info = user_info != null && user_info != undefined && user_info.length > 0 ? JSON.parse(user_info) : {};
     	    chatNameInput.val(user_info.nickname);
-
-    	    socket = io.connect();
+    	    
 
     		socket.on('connect_error', function (e) {
     				stateLabel.removeClass('label-success').addClass('label-danger').html('disconnected');
@@ -177,6 +181,14 @@
  				console.log(data);
     			localStorage.setItem('user_info', JSON.stringify(data));
     		});
+    		socket.on('user_name_check', function (data) {
+    		    console.log(data);
+                if (data.result) {
+                    $('#startChatButton').removeClass('label-danger').addClass('label-primary');
+                } else {
+                    $('#startChatButton').removeClass('label-primary').addClass('label-danger');
+                }
+    	    });
     	}
     	
         function switchPartner() {
