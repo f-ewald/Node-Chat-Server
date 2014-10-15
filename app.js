@@ -96,8 +96,6 @@ io.sockets.on('connection', function (socket) {
 console.log('The server now runs on http://127.0.0.1:' + conf.port + '/');
 
 function assign_partner(socket) {
-    //Loop through the solo users
-
     var partner;
     var oldPartner;
 
@@ -110,7 +108,8 @@ function assign_partner(socket) {
         oldPartner = socket.client.partner;
         socket.client.partner = undefined;
     }
-
+    
+    //Loop through the solo users
     for (var i = 0; i < soloUsers.length; i++) {
         var tmpUser = soloUsers[i];
         
@@ -121,12 +120,15 @@ function assign_partner(socket) {
         }
     }
     
+    // If we found a partner link each other.
     if (partner) {
         socket.client.partner = partner;
         partner.client.partner = socket;
         socket.emit('system_message', { type: 'user_found_partner', message: 'You are now chatting with ' + partner.client.nickname });
         partner.emit('system_message', { type: 'user_found_partner', message: 'You are now chatting with ' + socket.client.nickname });
-    } else {
+    }
+    // If no partner is found push the current user to the solo user so he can be found by others
+    else {
         soloUsers.push(socket);
     }
 }
